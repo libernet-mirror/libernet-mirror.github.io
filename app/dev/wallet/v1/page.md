@@ -1,7 +1,3 @@
----
-title: LiberWallet Format V1
----
-
 ## Overview
 
 This page specifies the file format used to store Libernet wallets and the process to derive the
