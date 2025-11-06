@@ -4,7 +4,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { type ComponentPropsWithoutRef, useEffect, useState } from "react";
 
-import { Logo, Logomark } from "@/components/Logo";
+import { Logo } from "@/components/Logo";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { ThemeSelector } from "@/components/ThemeSelector";
 
@@ -41,7 +41,7 @@ export const Header = () => {
       </div>
       <div className="relative flex grow basis-0 items-center">
         <Link href="/">
-          <Logomark className="h-9 w-9 lg:hidden" />
+          <Logo className="h-9 w-9 lg:hidden" />
           <Logo className="hidden h-9 w-auto fill-slate-700 lg:block dark:fill-sky-100" />
         </Link>
       </div>

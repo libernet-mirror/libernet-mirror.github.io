@@ -11,7 +11,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Dialog, DialogPanel } from "@headlessui/react";
 
-import { Logomark } from "@/components/Logo";
+import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
 
 const MenuIcon = (props: React.ComponentPropsWithoutRef<"svg">) => (
@@ -87,7 +87,7 @@ export const MobileNavigation = () => {
               <CloseIcon className="h-6 w-6 stroke-slate-500" />
             </button>
             <Link href="/" className="ml-6">
-              <Logomark className="h-9 w-9" />
+              <Logo className="h-9 w-9" />
             </Link>
           </div>
           <Navigation className="mt-5 px-1" onLinkClick={onLinkClick} />
