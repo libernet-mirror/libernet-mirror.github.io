@@ -13,6 +13,7 @@ const withMDX = createMDX({
       "remark-frontmatter",
       "remark-mdx-frontmatter",
       "remark-gfm",
+      "@r4ai/remark-callout",
       "remark-prism",
       "remark-math",
     ],

@@ -9,12 +9,15 @@ An account is a [BLS12-381][bls12-381] key pair that can be used to sign Liberne
 the public ledger, accounts are known by their _address_, which is computed using the SHA3 hash of
 the public BLS key (see the following sections for the exact procedure).
 
-Example account (**DO NOT USE FOR ANY REASON, IT'S LEAKED. ANY ASSETS TRANSFERRED TO THIS ACCOUNT
-WILL BE PERMANENTLY LOST.**):
+Example account:
 
 - private BLS key scalar (32 bytes): `0x2dde5ffbbc881910a9b1cc9567eae3c1e3f8563f4e2771eb9957ead7b7d6a3c5`
 - public BLS key point in compressed form (48 bytes): `0xaa4130eebea382e2c4312186290585d620b858c41a4316d8b62beacb0a443690d7d751ddd7b12eaa58470d29a0bf468b`
 - account address (a BLS scalar computed from the SHA3 hash of the public key): `0x210b0a3a23416f66a210531ec98db0fc39162b288f48de9289a6186af4f3eba1`
+
+> [!WARNING]
+> Do not use the account above, it's leaked. Any assets transferred to this account will be
+> **permanently lost**.
 
 The public ledger associates LIB balances and other assets to account addresses, and the protocol
 grants ownership of such assets to the key pair whose public key hashes to the corresponding
@@ -46,7 +49,10 @@ A version 1 Libernet wallet file is a [JSON][json] file with the following field
   format prefixed with `0x`.
 - `y` is an array containing exactly 10 BLS points over G1, each having the same format as `c`.
 
-Example wallet (**DO NOT USE, IT'S LEAKED**):
+Example wallet:
+
+> [!WARNING]
+> Do not use the following wallet, it's leaked.
 
 ```json
 {
@@ -133,9 +139,10 @@ None of the 512-bit values we use in this type of conversion have endianness, so
 
 9. Store `s`, `c`, and `y` to the wallet file.
 
-NOTE: step #8 is **very important** to maintain plausible deniability. Don't store the proofs for
-the actual passwords first and those for the random keys last, for example. The order of the proofs
-must **always** be randomized securely.
+> [!NOTE]
+> Step #8 is **very important** to maintain plausible deniability. Don't store the proofs for the
+> actual passwords first and those for the random keys last, for example. The order of the proofs
+> must **always** be randomized securely.
 
 ### Unlock Phase
 
@@ -161,9 +168,10 @@ must **always** be randomized securely.
 6. The account address is obtained by computing the SHA3-512 hash of the public key point in
    compressed form (48 bytes) and converting the hash to a BLS scalar via modular reduction.
 
-NOTE: to prevent timing attacks the algorithm at point #3 must run in constant time, therefore
-implementors **must** check $z$ against **all** 10 proofs, even if a proof succeeds before checking
-the last.
+> [!NOTE]
+> To prevent timing attacks the algorithm at point #3 must run in constant time, therefore
+> implementors **must** check $z$ against **all** 10 proofs, even if a proof succeeds before
+> checking the last.
 
 ### Test Vectors
 

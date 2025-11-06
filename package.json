@@ -20,6 +20,7 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@r4ai/remark-callout": "^0.6.2",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/mdx": "^2.0.13",
