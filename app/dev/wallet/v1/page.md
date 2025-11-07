@@ -146,7 +146,7 @@ None of the 512-bit values we use in this type of conversion have endianness, so
 > [!NOTE]
 > Step #8 is **very important** to maintain plausible deniability. Don't store the proofs for the
 > actual passwords first and those for the random keys last, for example. The order of the proofs
-> must **always** be randomized securely.
+> **must** be randomized securely.
 
 ### Unlock Phase
 
@@ -174,8 +174,8 @@ None of the 512-bit values we use in this type of conversion have endianness, so
 
 > [!NOTE]
 > To prevent timing attacks the algorithm at point #3 must run in constant time, therefore
-> implementors **must** check $z$ against **all** 10 proofs, even if a proof succeeds before
-> checking the last.
+> implementors must check $z$ against **all** 10 proofs even if one succeeds before checking the
+> last.
 
 ### Test Vectors
 
