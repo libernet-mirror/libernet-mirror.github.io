@@ -114,7 +114,7 @@ None of the 512-bit values we use in this type of conversion have endianness, so
 3. Derive a 64-byte key for each password using the [Argon2id][argon2] key derivation function with
    the following parameters:
    - algorithm version: 19 (0x13)
-   - M cost: 1024
+   - M cost: 256 * 1024 (= 256 MiB)
    - T cost: 2
    - P cost: 1
    - salt: the seed `s`
