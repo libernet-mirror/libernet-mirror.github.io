@@ -16,6 +16,7 @@ export const navigation = [
       { title: "Architecture", href: "/dev/architecture" },
       { title: "Wire Protocol", href: "/dev/protocol" },
       { title: "Wallet Format V1", href: "/dev/wallet/v1" },
+      { title: "zkSNARKs and PLONK", href: "/dev/plonk" },
     ],
   },
 ];
