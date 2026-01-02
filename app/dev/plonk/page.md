@@ -231,8 +231,8 @@ $$
 
 > [!NOTE]
 > Negative values don't exist in our scalar field. What we actually do to achieve the same result is
-> to set $q_O = r - 1$, to which -1 is congruent. $r$ is the order of the BLS12-381 scalar field
-> provided [above](#evaluation-domain-and-polynomial-interpolation).
+> to set $q_O = r - 1$, to which -1 is congruent. $r$ is the prime order of the BLS12-381 scalar
+> field, provided [above](#evaluation-domain-and-polynomial-interpolation).
 
 TODO
 
