@@ -223,20 +223,111 @@ $$
 q_L = 1, q_R = 1, q_O = -1, q_M = 0, q_C = 0
 $$
 
-whereas a multiplication gate would have:
+effectively yielding the constraint:
+
+$$
+w_L + w_R - w_O = 0 \\
+w_L + w_R = w_O
+$$
+
+A multiplication gate would instead have:
 
 $$
 q_L = 0, q_R = 0, q_O = -1, q_M = 1, q_C = 0
 $$
 
-> [!NOTE]
-> Negative values don't exist in our scalar field. What we actually do to achieve the same result is
-> to set $q_O = r - 1$, to which -1 is congruent. $r$ is the prime order of the BLS12-381 scalar
-> field, provided [above](#evaluation-domain-and-polynomial-interpolation).
+resulting in:
 
-TODO
+$$
+-w_O + w_L \cdot w_R = 0 \\
+w_L \cdot w_R = w_O
+$$
+
+> [!NOTE]
+> Negative values don't exist in our scalar field. What we actually do for the above gate types to
+> achieve the same result is to set $q_O = r - 1$, to which -1 is congruent. $r$ is the prime order
+> of the BLS12-381 scalar field, provided [above](#evaluation-domain-and-polynomial-interpolation).
+
+Defining a circuit with $N$ gates would result in $N$ values for $q_L$, $N$ values for $q_R$, and so
+on, meaning we can encode the five $q_*$ columns in five corresponding polynomials $Q_*$. Let $W_*$
+be the polynomials encoding the three witness columns, after interpolating all polynomials we have:
+
+$$
+T(x) = Q_L(x) \cdot W_L(x) + Q_R(x) \cdot W_R(x) + Q_M(x) \cdot W_L(x) \cdot W_R(x) + Q_C(x)
+$$
+
+Note that the $Q_*$ can (and in fact _must_) be interpolated ahead of time, so they only contribute
+to the setup phase (in both the prover and the verifier) but not to the proving cost.
+
+This equation is a single polynomial equation that we can commit to and for which we can provide KZG
+openings for one or more challenge points. To maintain the protocol non-interactive we can use the
+[Fiat-Shamir heuristic][fiat-shamir] to determine the challenge points, e.g. we can compute them by
+hashing the witness values.
+
+To prove that the witness $W_*$ really was computed by the circuit gates defined by $Q_*$ we need to
+prove:
+
+$$
+T(\omega_0^i) = 0
+$$
+
+for all $i$, meaning that our constraint equation must be zero on all points of the evaluation
+domain $\omega_0^0$, $\omega_0^1$, $\omega_0^2$, ..., $\omega_0^{k - 1}$. In other words, **all
+powers of $\omega_0$ must be roots of the polynomial $T(x)$**. That means $T$ can be rewritten as:
+
+$$
+\begin{aligned}
+T(x) &= P(x) \cdot (x - \omega_0^0) \cdot (x - \omega_0^1) \cdot ... \cdot (x - \omega_0^{k - 1}) \\
+     &= P(x) \cdot \prod_{i = 0}^{k - 1} (x - \omega_0^i)
+\end{aligned}
+$$
+
+where $P$ is a quotient polynomial resulting from the divion of $T$ by
+$\prod_{i = 0}^{k - 1} (x - \omega_0^i)$.
+
+The divisor $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$ is a polynomial that vanishes on the whole
+evaluation domain and doesn't have any other roots. It's sometimes known as the **zero polynomial**,
+and we'll indicate it with $Z(x)$.
+
+Determining the coefficients of $Z$ is very straightforward because the condition of vanishing on
+all $k$-th roots of unity is simply defined by the equation:
+
+$$
+x^k = 1 \\
+x^k - 1 = 0
+$$
+
+so we have:
+
+$$
+Z(x) = x^k - 1
+$$
+
+Circling back to the problem of proving that $T(x)$ is satisfied, i.e. zero on all powers of
+$\omega_0$, we can adopt the following protocol:
+
+- the prover determines a challenge value $\beta$ using the Fiat-Shamir heuristic;
+- the prover generates the coefficients of $T$ by multiplying the $Q_*$ polynomials by the $W_*$
+  polynomials as per the definition of $T$;
+- the prover divides $T$ by $Z$ using [polynomial long division][long-division] and obtains $P$ (if
+  $T$ really is satisfied there must be no remainder);
+- the prover commits to $P$ and opens it at $\beta$.
+
+Note that **the existence of $P$ without any remainder implies that $T$ is divisible by $Z$ and is
+therefore zero on all the domain and fully satisfied**. Thanks to that, on the verifier side we just
+need to verify the KZG opening for $W_*(\beta)$ and $P(\beta)$ and check:
+
+$$
+Q_L(\beta) \cdot W_L(\beta) + Q_R(\beta) \cdot W_R(\beta) + Q_M(\beta) \cdot W_L(\beta) \cdot W_R(\beta) + Q_C(\beta) = P(\beta) \cdot Z(\beta)
+$$
+
+This is however not yet enough to prove that the witness really fits the circuits: our protocol so
+far checks that each gate has worked correctly but doesn't check that the gates were connected as
+expected. To achieve the latter we need to check [wire constraints](#wire-constraints).
 
 ## Wire Constraints
+
+This is the most complex part of PLONK.
 
 TODO
 
@@ -246,8 +337,10 @@ TODO
 
 [crypto-poly]: https://github.com/libernet-mirror/crypto/blob/main/src/poly.rs
 [fermat]: https://en.wikipedia.org/wiki/Fermat%27s_little_theorem
+[fiat-shamir]: https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic
 [fft]: https://en.wikipedia.org/wiki/Fast_Fourier_transform
 [kzg]: https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html
 [lagrange]: https://en.wikipedia.org/wiki/Lagrange_polynomial
+[long-division]: https://en.wikipedia.org/wiki/Polynomial_long_division
 [plonk]: https://eprint.iacr.org/2019/953.pdf
 [zksnarks]: https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof
