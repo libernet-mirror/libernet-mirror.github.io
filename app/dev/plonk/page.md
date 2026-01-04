@@ -200,11 +200,11 @@ Proving knowledge of the witness (as per point 3a above) is easy:
 - KZG openings are provided to reveal the public parts of the computation.
 
 However, this doesn't prove that the witnessed values really did result from computing the known
-circuit. To achieve that, we need to enforce a set of polynomial equations defined by the circuit.
-These equations are known as **constraints**. The initial definition of a circuit, which is
+circuit. To achieve that, we need to enforce a set of polynomial equations that characterize the
+circuit. These equations are known as **constraints**. The initial definition of a circuit, which is
 performed only once and ahead of time, results in two types of constraints:
 [**gates constraints**](#gate-constraints) and [**wire constraints**](#wire-constraints), discussed
-below. This initial circuit definition process can be performed independently by the prover and the
+below. This initial definition process can be performed independently by the prover and the
 verifier, but it must results in exactly the same constraints for the proofs to be valid.
 
 ## Gate Constraints
@@ -328,13 +328,40 @@ $$
 Q_L(\beta) \cdot L(\beta) + Q_R(\beta) \cdot R(\beta) + Q_O(\beta) \cdot O(\beta) + Q_M(\beta) \cdot L(\beta) \cdot R(\beta) + Q_C(\beta) = P(\beta) \cdot Z(\beta)
 $$
 
-This is however not yet enough to prove that the witness really fits the circuits: our protocol so
+This is however not yet enough to prove that the witness really fits the circuit: our protocol so
 far checks that each gate has worked correctly but doesn't check that the gates were connected as
 expected. To achieve the latter we need to check [wire constraints](#wire-constraints).
 
 ## Wire Constraints
 
 This is the most complex part of PLONK.
+
+Proving that the gates of the circuit are connected as intended boils down to proving that specific
+groups of cells of the witness table have equal values, and doing so without revealing the whole
+witness.
+
+Here is once again the full witness table of our [sample circuit](#circuits):
+
+| LHS | RHS | Out |
+| --- | --- | --- |
+| 3   | 3   | 9   |
+| 9   | 3   | 27  |
+| 3   | 27  | 30  |
+| 30  | 5   | 35  |
+
+Based on the wiring of the circuit, we need to partition the wires as follows and prove that each
+partition has identical values. We use $L_i$, $R_i$, and $O_i$ to indicate the $i$-th row of the
+left-hand side, right-hand side, and output column, respectively.
+
+- $\{ L_0, R_0, R_1, L_2 \}$ (value 3)
+- $\{ O_0, L_1 \}$ (value 9)
+- $\{ O_1, R_2 \}$ (value 27)
+- $\{ O_2, L_3 \}$ (value 30)
+
+To achieve our goal we'll now introduce a new polynomial expression known as **coordinate pair
+accumulator**. Let $\beta$ and $\gamma$ be two challenge values computed with Fiat-Shamir (one of
+the two can be the same used to prove the [gate constraints](#gate-constraints)). The coordinate
+pair accumulator is:
 
 TODO
 
