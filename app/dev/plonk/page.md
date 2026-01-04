@@ -99,11 +99,13 @@ $$
 
 where $N$ is a power of 2.
 
-When working with standard math tools the $\omega^N = 1$ equation has exactly $N$ complex solutions,
-only one of which is a real number ($\omega = 1$). In modular arithmetic things work differently,
-but since the BL12-381 scalar field has prime order, [Fermat's Little Theorem][fermat] shows us that
-the equation can still be satisfied. In fact, the field has the following well-known $2^{32}$-th
-root of unity:
+When working with standard math tools the $\omega^N = 1$ equation has exactly $N$ complex solutions.
+For example, for $N = 4$ the four solutions are $i$, $-i$, $1$, and $-1$ (with $i$ being the
+[imaginary unit][imaginary-unit] $\sqrt{-1}$).
+
+In modular arithmetic things work differently, but since the BL12-381 scalar field has prime order,
+[Fermat's Little Theorem][fermat] shows us that the $\omega^N = 1$ equation can still be satisfied.
+In fact, the field has the following well-known $2^{32}$-th root of unity:
 
 ```
 0x16a2a19edfe81f20d09b681922c813b4b63683508c2280b93829971f439f0d2b
@@ -194,13 +196,13 @@ $x$ is set to 3:
 
 Proving knowledge of the witness (as per point 3a above) is easy:
 
-- each column of the witness is padded with zeros until its size is a power of 2,
+- the columns of the witness are padded with zeros until their size is a power of 2,
 - each column is then encoded as a polynomial using the FFT algorithm,
 - the polynomial is committed to G1 as per KZG and the 3 commitments are provided as proof,
 - KZG openings are provided to reveal the public parts of the computation.
 
 However, this doesn't prove that the witnessed values really did result from computing the known
-circuit. To achieve that, we need to enforce a set of polynomial equations that characterize the
+circuit. To achieve that we need to enforce a set of polynomial equations that characterize the
 circuit. These equations are known as **constraints**. The initial definition of a circuit, which is
 performed only once and ahead of time, results in two types of constraints:
 [**gates constraints**](#gate-constraints) and [**wire constraints**](#wire-constraints), discussed
@@ -209,7 +211,7 @@ verifier, but it must results in exactly the same constraints for the proofs to 
 
 ## Gate Constraints
 
-In the PLONK proving scheme, each gate defines a polynomial constraint of the following form:
+In the PLONK proving scheme each gate defines a polynomial constraint of the following form:
 
 $$
 q_L \cdot l + q_R \cdot r + q_O \cdot o + q_M \cdot l \cdot r + q_C = 0
@@ -292,7 +294,7 @@ $$
 where $P$ is a quotient polynomial resulting from the division of $T$ by
 $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$.
 
-The divisor $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$ is a polynomial that vanishes on the whole
+The divisor $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$ is a polynomial that vanishes on all the
 evaluation domain and doesn't have any other roots. It's sometimes known as the **zero polynomial**,
 and we'll indicate it with $Z(x)$.
 
@@ -330,7 +332,7 @@ $$
 
 This is however not yet enough to prove that the witness really fits the circuit: our protocol so
 far checks that each gate has worked correctly but doesn't check that the gates were connected as
-expected. To achieve the latter we need to check [wire constraints](#wire-constraints).
+intended. To achieve the latter we need to check [wire constraints](#wire-constraints).
 
 ## Wire Constraints
 
@@ -373,6 +375,7 @@ TODO
 [fermat]: https://en.wikipedia.org/wiki/Fermat%27s_little_theorem
 [fiat-shamir]: https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic
 [fft]: https://en.wikipedia.org/wiki/Fast_Fourier_transform
+[imaginary-unit]: https://en.wikipedia.org/wiki/Imaginary_unit
 [kzg]: https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html
 [lagrange]: https://en.wikipedia.org/wiki/Lagrange_polynomial
 [long-division]: https://en.wikipedia.org/wiki/Polynomial_long_division
