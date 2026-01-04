@@ -4,25 +4,28 @@ title: zkSNARKs and PLONK
 
 ## Overview
 
-[zkSNARKs][zksnarks] are modern cryptography primitives that prove the correct execution of an
-arbitrary computation without the need for a verifier to re-execute that computation. In addition to
-that, zkSNARKs have the ability to keep part of the computation secret (or rather, to reveal only
-specific parts).
+[zkSNARKs][zksnarks] are powerful modern cryptography primitives used to prove the correct execution
+of an arbitrary computation without the need for a verifier to re-execute that computation. In
+addition to that, zkSNARKs have the ability to reveal only some parts of the computation and retain
+the rest as a secret, all while proving correctness of 100% of it.
 
-Modern blockchains use zkSNARKs to prove the correct execution of a smartcontract endpoint, for
-example.
+Common use cases for zkSNARKs in modern blockchains are:
+
+- proving the correct execution of a smartcontract endpoint without requiring all validators in the
+  network to re-execute the corresponding transaction,
+- implementing privacy-preserving protocols such as anonymous voting and payments.
 
 The acronym "zkSNARK" stands for **Z**ero-**K**nowledge **S**uccinct **N**on-interactive
 **Ar**gument of **K**nowledge:
 
-- **zero-knowledge** means the computation is not revealed, except for the parts the prover chooses
-  to reveal;
+- **zero-knowledge** means the proven computation is not revealed, except for the parts the prover
+  chooses to reveal;
 - **succinct** means the size of the proof is sublinear in the size of the original computation (in
   fact, the zkSNARK scheme used in Libernet results in constant-size proofs of about 1 KiB each);
 - **non-interactive** means the verification protocol does not require a challenge-response
   round-trip;
 - **argument of knowledge** indicates that the prover really had the full trace of the computation,
-  notwithstanding all the above requirements.
+  notwithstanding the above requirements.
 
 Libernet uses zkSNARKs in a few different contexts, for example anonymous payments towards incognito
 accounts. Our zkSNARK protocol is based on [KZG polynomial commitments][kzg] over the BLS12-381
@@ -70,9 +73,11 @@ ordered list of integers, consider the following list of pairs:
 ```
 
 To encode the ordered list of integers `[33, 10, 24, 49]` we can use a polynomial that crosses the
-points represented by the above pairs. This is achieved by **polynomial interpolation**.
+points represented by the above pairs. This is achieved by **polynomial interpolation**, and the
+resulting polynomial would evaluate to `33` in `0`, to `10` in `1`, etc., effectively encoding the
+original list at the coordinates 0, 1, 2, and 3.
 
-There are two distinct approaches to implement polynomial interpolation:
+There are two distinct approaches to implementing polynomial interpolation:
 [**Lagrange interpolation**][lagrange] and the [**Fast Fourier Transform**][fft]. Algorithms based
 on Lagrange interpolation take $O(N^2)$ time where $N$ is the number of points to interpolate, so in
 Libernet we use the Fast Fourier Transform which takes $O(N \cdot log(N))$ time. However, some parts
@@ -159,11 +164,11 @@ of our `crypto` library][crypto-poly].
 Proving the correct execution of an arbitrary computation takes the following steps:
 
 1. both the prover and the verifier become aware of the same circuit (gates and wires);
-2. the prover runs the computations, providing input values to the circuit, computing all
+2. the prover runs the computation, providing input values to the circuit, computing all
    intermediate values, and obtaining the output values;
 3. the prover provides:
-   a. a proof of knowledge of the above values;
-   b. a proof that the above values satisfy certain constraints;
+   - a proof of knowledge of the above values;
+   - a proof that the above values satisfy certain constraints;
 4. the verifier verifies the above proofs without any challenge-response round-trip, just checking
    them against the original circuit.
 
@@ -207,14 +212,14 @@ verifier, but it must results in exactly the same constraints for the proofs to 
 In the PLONK proving scheme, each gate defines a polynomial constraint of the following form:
 
 $$
-q_L \cdot w_L + q_R \cdot w_R + q_O \cdot w_O + q_M \cdot w_L \cdot w_R + q_C = 0
+q_L \cdot l + q_R \cdot r + q_O \cdot o + q_M \cdot l \cdot r + q_C = 0
 $$
 
 where:
 
-- $w_L$ is the left-hand side input of the gate,
-- $w_R$ is the right-hand side input of the gate,
-- $w_O$ is the output of the gate,
+- $l$ is the left-hand side input of the gate,
+- $r$ is the right-hand side input of the gate,
+- $o$ is the output of the gate,
 - the $q_*$ factors are constants specific to the gate.
 
 For example, an addition gate would have:
@@ -226,8 +231,8 @@ $$
 effectively yielding the constraint:
 
 $$
-w_L + w_R - w_O = 0 \\
-w_L + w_R = w_O
+l + r - o = 0 \\
+l + r = o
 $$
 
 A multiplication gate would instead have:
@@ -239,8 +244,8 @@ $$
 resulting in:
 
 $$
--w_O + w_L \cdot w_R = 0 \\
-w_L \cdot w_R = w_O
+-o + l \cdot r = 0 \\
+l \cdot r = o
 $$
 
 > [!NOTE]
@@ -249,23 +254,25 @@ $$
 > of the BLS12-381 scalar field, provided [above](#evaluation-domain-and-polynomial-interpolation).
 
 Defining a circuit with $N$ gates would result in $N$ values for $q_L$, $N$ values for $q_R$, and so
-on, meaning we can encode the five $q_*$ columns in five corresponding polynomials $Q_*$. Let $W_*$
-be the polynomials encoding the three witness columns, after interpolating all polynomials we have:
+on, meaning we can encode the five $q_*$ columns in five corresponding polynomials $Q_*$. Let $L$,
+$R$, and $O$ be the polynomials encoding the three witness columns. After interpolating all
+polynomials we have:
 
 $$
-T(x) = Q_L(x) \cdot W_L(x) + Q_R(x) \cdot W_R(x) + Q_M(x) \cdot W_L(x) \cdot W_R(x) + Q_C(x)
+T(x) = Q_L(x) \cdot L(x) + Q_R(x) \cdot R(x) + Q_O(x) \cdot O(x) + Q_M(x) \cdot L(x) \cdot R(x) + Q_C(x)
 $$
 
 Note that the $Q_*$ can (and in fact _must_) be interpolated ahead of time, so they only contribute
-to the setup phase (in both the prover and the verifier) but not to the proving cost.
+to the cost of the setup phase (in both the prover and the verifier) but not to the proving or
+verification cost.
 
 This equation is a single polynomial equation that we can commit to and for which we can provide KZG
-openings for one or more challenge points. To maintain the protocol non-interactive we can use the
+openings on one or more challenge points. To maintain the protocol non-interactive we can use the
 [Fiat-Shamir heuristic][fiat-shamir] to determine the challenge points, e.g. we can compute them by
-hashing the witness values.
+hashing the polynomial commitments of the witness columns.
 
-To prove that the witness $W_*$ really was computed by the circuit gates defined by $Q_*$ we need to
-prove:
+To prove that the witness $(L, R, O)$ really was computed by the circuit gates defined by $Q_*$ we
+need to prove:
 
 $$
 T(\omega_0^i) = 0
@@ -282,7 +289,7 @@ T(x) &= P(x) \cdot (x - \omega_0^0) \cdot (x - \omega_0^1) \cdot ... \cdot (x - 
 \end{aligned}
 $$
 
-where $P$ is a quotient polynomial resulting from the divion of $T$ by
+where $P$ is a quotient polynomial resulting from the division of $T$ by
 $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$.
 
 The divisor $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$ is a polynomial that vanishes on the whole
@@ -307,7 +314,7 @@ Circling back to the problem of proving that $T(x)$ is satisfied, i.e. zero on a
 $\omega_0$, we can adopt the following protocol:
 
 - the prover determines a challenge value $\beta$ using the Fiat-Shamir heuristic;
-- the prover generates the coefficients of $T$ by multiplying the $Q_*$ polynomials by the $W_*$
+- the prover generates the coefficients of $T$ by multiplying the $Q_*$ polynomials by the witness
   polynomials as per the definition of $T$;
 - the prover divides $T$ by $Z$ using [polynomial long division][long-division] and obtains $P$ (if
   $T$ really is satisfied there must be no remainder);
@@ -315,10 +322,10 @@ $\omega_0$, we can adopt the following protocol:
 
 Note that **the existence of $P$ without any remainder implies that $T$ is divisible by $Z$ and is
 therefore zero on all the domain and fully satisfied**. Thanks to that, on the verifier side we just
-need to verify the KZG opening for $W_*(\beta)$ and $P(\beta)$ and check:
+need to verify the KZG opening for $L(\beta)$, $R(\beta)$, $O(\beta)$, and $P(\beta)$ and check:
 
 $$
-Q_L(\beta) \cdot W_L(\beta) + Q_R(\beta) \cdot W_R(\beta) + Q_M(\beta) \cdot W_L(\beta) \cdot W_R(\beta) + Q_C(\beta) = P(\beta) \cdot Z(\beta)
+Q_L(\beta) \cdot L(\beta) + Q_R(\beta) \cdot R(\beta) + Q_O(\beta) \cdot O(\beta) + Q_M(\beta) \cdot L(\beta) \cdot R(\beta) + Q_C(\beta) = P(\beta) \cdot Z(\beta)
 $$
 
 This is however not yet enough to prove that the witness really fits the circuits: our protocol so
