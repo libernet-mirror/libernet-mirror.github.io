@@ -496,10 +496,18 @@ $$
 Z(\omega^{i + 1}) = Z(\omega^i) \cdot \frac{N(\omega^i)}{D(\omega^i)}
 $$
 
+$$
+Z(\omega^{i + 1}) \cdot D(\omega^i) = Z(\omega^i) \cdot N(\omega^i)
+$$
+
+$$
+Z(\omega^{i + 1}) \cdot D(\omega^i) - Z(\omega^i) \cdot N(\omega^i) = 0
+$$
+
 The last formula is equivalent to saying:
 
 $$
-Z(\omega x) \equiv Z(x) \cdot \frac{N(x)}{D(x)} \mod{H}
+Z(\omega x) D(x) - Z(x) N(x) \equiv 0 \mod{H}
 $$
 
 The $\mod{H}$ notation means _"for every $x$ in the evaluation domain"_, i.e. for every power of
@@ -509,7 +517,7 @@ The problem of proving the wire constraints has now been turned into proving the
 claims:
 
 - **base case**: $Z(1) = 1$
-- **inductive case**: $Z(\omega x) \cdot D(x) - Z(x) \cdot N(x) \equiv 0 \mod{H}$
+- **inductive case**: $Z(\omega x) D(x) - Z(x) N(x) \equiv 0 \mod{H}$
 
 Note what happens after the last element of the domain, $\omega^{k - 1}$:
 
