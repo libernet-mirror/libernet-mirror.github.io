@@ -54,7 +54,7 @@ as anonymous voting and payments where some elements of the computation remain s
 ## Evaluation Domain and Polynomial Interpolation
 
 Libernet uses the BLS12-381 elliptic curve, so all of its zkSNARK circuits are evaluated on the
-scalar field of that curve. The scalar field of BLS12-381 has the following ~256 bit order:
+scalar field of that curve. The field has the following ~256 bit order:
 
 ```
 r = 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
@@ -157,6 +157,11 @@ we'll use the FFT algorithm to encode the following points:
 ```
 
 where `w0` is a $k$-th root of unity $\omega_0$, in this case $k = 4$.
+
+> [!NOTE]
+> In the following we will use $\omega$ instead of $\omega_0$ for notational simplicity. We still
+> use $k$ to indicate the (padded) size of the circuit, so you'll often see things like
+> $\omega^{k - 1}$.
 
 The Fast Fourier Transform and other algorithms on polynomials are implemented in [the `poly` module
 of our `crypto` library][crypto-poly].
@@ -277,24 +282,24 @@ To prove that the witness $(L, R, O)$ really was computed by the circuit gates d
 need to prove:
 
 $$
-T(\omega_0^i) = 0
+T(\omega^i) = 0
 $$
 
 for all $i$, meaning that our constraint equation must be zero on all points of the evaluation
-domain $\omega_0^0$, $\omega_0^1$, $\omega_0^2$, ..., $\omega_0^{k - 1}$. In other words, **all
-powers of $\omega_0$ must be roots of the polynomial $T(x)$**. That means $T$ can be rewritten as:
+domain $\omega^0$, $\omega^1$, $\omega^2$, ..., $\omega^{k - 1}$. In other words, **all
+powers of $\omega$ must be roots of the polynomial $T(x)$**. That means $T$ can be rewritten as:
 
 $$
 \begin{aligned}
-T(x) &= P(x) \cdot (x - \omega_0^0) \cdot (x - \omega_0^1) \cdot ... \cdot (x - \omega_0^{k - 1}) \\
-     &= P(x) \cdot \prod_{i = 0}^{k - 1} (x - \omega_0^i)
+T(x) &= P(x) \cdot (x - \omega^0) \cdot (x - \omega^1) \cdot ... \cdot (x - \omega^{k - 1}) \\
+     &= P(x) \cdot \prod_{i = 0}^{k - 1} (x - \omega^i)
 \end{aligned}
 $$
 
 where $P$ is a quotient polynomial resulting from the division of $T$ by
-$\prod_{i = 0}^{k - 1} (x - \omega_0^i)$.
+$\prod_{i = 0}^{k - 1} (x - \omega^i)$.
 
-The divisor $\prod_{i = 0}^{k - 1} (x - \omega_0^i)$ is a polynomial that vanishes on all the
+The divisor $\prod_{i = 0}^{k - 1} (x - \omega^i)$ is a polynomial that vanishes on all the
 evaluation domain and doesn't have any other roots. It's sometimes known as the **zero polynomial**,
 and we'll indicate it with $Z(x)$.
 
@@ -313,7 +318,7 @@ Z(x) = x^k - 1
 $$
 
 Circling back to the problem of proving that $T(x)$ is satisfied, i.e. zero on all powers of
-$\omega_0$, we can adopt the following protocol:
+$\omega$, we can adopt the following protocol:
 
 - the prover determines a challenge value $\beta$ using the Fiat-Shamir heuristic;
 - the prover generates the coefficients of $T$ by multiplying the $Q_*$ polynomials by the witness
@@ -339,8 +344,7 @@ intended. To achieve the latter we need to check [wire constraints](#wire-constr
 This is the most complex part of PLONK.
 
 Proving that the gates of the circuit are connected as intended boils down to proving that specific
-groups of cells of the witness table have equal values, and doing so without revealing the whole
-witness.
+groups of cells of the witness table have equal values, without revealing the whole witness.
 
 Here is once again the full witness table of our [sample circuit](#circuits):
 
@@ -352,18 +356,114 @@ Here is once again the full witness table of our [sample circuit](#circuits):
 | 30  | 5   | 35  |
 
 Based on the wiring of the circuit, we need to partition the wires as follows and prove that each
-partition has identical values. We use $L_i$, $R_i$, and $O_i$ to indicate the $i$-th row of the
-left-hand side, right-hand side, and output column, respectively.
+partition contains identical values. We use $L_i$, $R_i$, and $O_i$ to indicate the $i$-th row of
+the left input, right input, and output column, respectively.
 
 - $\{ L_0, R_0, R_1, L_2 \}$ (value 3)
 - $\{ O_0, L_1 \}$ (value 9)
 - $\{ O_1, R_2 \}$ (value 27)
 - $\{ O_2, L_3 \}$ (value 30)
+- $\{ R_3 \}$ (value 5)
+- $\{ O_3 \}$ (value 35)
 
-To achieve our goal we'll now introduce a new polynomial expression known as **coordinate pair
-accumulator**. Let $\beta$ and $\gamma$ be two challenge values computed with Fiat-Shamir (one of
-the two can be the same used to prove the [gate constraints](#gate-constraints)). The coordinate
-pair accumulator is:
+To achieve our goal we'll build a polynomial expression based on permutations of the X coordinates
+of our domain, $\omega^0, \omega^1, ..., \omega^{k - 1}$.
+
+Let's first analyze a simplified case that works on a single witness column polynomial $W$. Let
+$\sigma$ be a permutation of the evaluation domain that rotates or otherwise rearranges the
+coordinates of each wire partition, and let $\sigma_i$ be the $i$-th element of the permutation. Let
+$\beta$ and $\gamma$ be two challenge values computed with Fiat-Shamir (one of the two can be the
+same used to prove the [gate constraints](#gate-constraints)). We define the **coordinate pair
+accumulator** of $W$ as follows:
+
+$$
+\prod_{i = 0}^{k - 1} \frac{W(\omega^i) + \beta \cdot \omega^i + \gamma}{W(\omega^i) + \beta \cdot \sigma_i + \gamma}
+$$
+
+This gives us an intuition of how partition-wise wire equality is proven: since the $\sigma_i$
+coordinates in the denominator are permuted, the value of the coordinate pair accumulator is 1 iff
+the factors in the denominator remain equal to those in the numerator except for their order -- in
+other words, iff the permutation didn't change anything in the overall expression.
+
+Let's now extend this technique to work with three different witness columns $L$, $R$, and $O$. We
+will build a "unified" coordinate pair accumulator multiplying the individual accumulators of the
+three columns together, but to avoid collisions among the X coordinates we need to introduce two
+constants $k_1$ and $k_2$ in the accumulators of $R$ and $O$ respectively (we can use 1 as the
+constant for $L$) and we need to change the construction of $\sigma$ accordingly. In Libernet we set
+$k_1 = 71$ and $k_2 = 104$.
+
+Specifically, we will now construct three separate permutations $\sigma_L$, $\sigma_R$, and
+$\sigma_O$. To do that, we first lay out the X coordinates of $L$, $R$, and $O$ in a single array
+with length $3k$ (note that the coordinates of $R$ and $O$ are multiplied by $k_1$ and $k_2$
+respectively, so all values are different):
+
+$$
+\omega^0, \omega^1, ..., \omega^{k - 1}, k_1 \omega^0, k_1 \omega^1, ..., k_1 \omega^{k - 1}, k_2 \omega^0, k_2 \omega^1, ..., k_2 \omega^{k - 1}
+$$
+
+Then we rotate or otherwise rearrange the elements of each partition. It's okay to use a predefined
+permutation algorithm, e.g. rotation by a fixed offset; the only requirement is that each partition
+has a permutation with exactly 1 cycle. For example, if we used a rotation by 1 slot of our [sample
+circuit above](#circuits) we'd get the following permutation:
+
+![Permutation of our sample circuit.](/permutation.svg)
+
+resulting in:
+
+$$
+\omega^2, k_2 \omega^0, k_1 \omega^1, k_2 \omega^2, \omega^0, k_1 \omega^0, k_2 \omega^1, k_1 \omega^3, \omega^1, k_1 \omega^2, \omega^3, k_2 \omega^3
+$$
+
+Once we have this permuted, $3k$-long sequence, we get:
+
+- $\sigma_L$ by taking the first $k$ elements,
+- $\sigma_R$ by taking the next $k$ elements,
+- $\sigma_O$ by taking the last $k$ elements.
+
+In our example we'd get:
+
+$$
+\begin{aligned}
+  \sigma_L &= \{ \omega^2, k_2 \omega^0, k_1 \omega^1, k_2 \omega^2 \} \\
+  \sigma_R &= \{ \omega^0, k_1 \omega^0, k_2 \omega^1, k_1 \omega^3 \} \\
+  \sigma_O &= \{ \omega^1, k_1 \omega^2, \omega^3, k_2 \omega^3 \} \\
+\end{aligned}
+$$
+
+These three $\sigma_*$ sequences can be encoded in three polynomials, each mapping an element of the
+evaluation domain to the corresponding permuted element. Following our example, the $\sigma_L$
+polynomial is obtained by interpolating the following points:
+
+```
+(w^0, w^2)
+(w^1, k2 * w^0)
+(w^2, k1 * w^1)
+(w^3, k2 * w^2)
+```
+
+For $\sigma_R$ we have:
+
+```
+(w^0, w^0)
+(w^1, k1 * w^0)
+(w^2, k2 * w^1)
+(w^3, k1 * w^3)
+```
+
+and so on.
+
+Much like the $Q_*$ polynomials from the [gate constraints](#gate-constraints), the $\sigma_*$
+polynomials of the wire constraints are also interpolated only once ahead of time, and do not
+contribute to the prover or verifier cost.
+
+The final coordinate pair accumulator expression for three witness columns is:
+
+$$
+\prod_{i = 0}^{k - 1} \frac{L(\omega^i) + \beta \cdot \omega^i + \gamma}{L(\omega^i) + \beta \cdot \sigma_L(\omega^i) + \gamma} \cdot \frac{R(\omega^i) + \beta \cdot k_1 \cdot \omega^i + \gamma}{R(\omega^i) + \beta \cdot k_1 \cdot \sigma_R(\omega^i) + \gamma} \cdot \frac{O(\omega^i) + \beta \cdot k_2 \cdot \omega^i + \gamma}{O(\omega^i) + \beta \cdot k_2 \cdot \sigma_O(\omega^i) + \gamma}
+$$
+
+As mentioned above, **we need to prove that this expression equals 1 when plugging the polynomial of
+the proven witness, $L$, $R$, and $O$**.
 
 TODO
 

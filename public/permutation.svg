@@ -1,0 +1,103 @@
+<svg width="900" height="240" viewBox="0 0 900 240"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10"
+            refX="6" refY="3"
+            orient="auto"
+            markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <style>
+    text {
+      font-family: monospace;
+      font-size: 14px;
+      fill: #111;
+      text-anchor: middle;
+    }
+    .arrow {
+      stroke: #333;
+      stroke-width: 1.5;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+  </style>
+
+  <!-- Coordinates -->
+  <!-- x positions: 50 + i*70 -->
+  <!-- top y = 50, bottom y = 180 -->
+
+  <!-- Top row: source elements -->
+  <g id="sources">
+    <text x="50"  y="50">L0</text>
+    <text x="120" y="50">L1</text>
+    <text x="190" y="50">L2</text>
+    <text x="260" y="50">L3</text>
+    <text x="330" y="50">R0</text>
+    <text x="400" y="50">R1</text>
+    <text x="470" y="50">R2</text>
+    <text x="540" y="50">R3</text>
+    <text x="610" y="50">O0</text>
+    <text x="680" y="50">O1</text>
+    <text x="750" y="50">O2</text>
+    <text x="820" y="50">O3</text>
+  </g>
+
+  <!-- Bottom row: permuted elements -->
+  <g id="targets">
+    <text x="50"  y="180">L2</text>
+    <text x="120" y="180">O0</text>
+    <text x="190" y="180">R1</text>
+    <text x="260" y="180">O2</text>
+    <text x="330" y="180">L0</text>
+    <text x="400" y="180">R0</text>
+    <text x="470" y="180">O1</text>
+    <text x="540" y="180">R3</text>
+    <text x="610" y="180">L1</text>
+    <text x="680" y="180">R2</text>
+    <text x="750" y="180">L3</text>
+    <text x="820" y="180">O3</text>
+  </g>
+
+  <!-- Arrows linking identical elements -->
+
+  <!-- L0: top x=50 -> bottom x=330 -->
+  <line class="arrow" x1="50"  y1="60" x2="330" y2="165"/>
+
+  <!-- L1: top x=120 -> bottom x=610 -->
+  <line class="arrow" x1="120" y1="60" x2="610" y2="165"/>
+
+  <!-- L2: top x=190 -> bottom x=50 -->
+  <line class="arrow" x1="190" y1="60" x2="50"  y2="165"/>
+
+  <!-- L3: top x=260 -> bottom x=750 -->
+  <line class="arrow" x1="260" y1="60" x2="750" y2="165"/>
+
+  <!-- R0: top x=330 -> bottom x=400 -->
+  <line class="arrow" x1="330" y1="60" x2="400" y2="165"/>
+
+  <!-- R1: top x=400 -> bottom x=190 -->
+  <line class="arrow" x1="400" y1="60" x2="190" y2="165"/>
+
+  <!-- R2: top x=470 -> bottom x=680 -->
+  <line class="arrow" x1="470" y1="60" x2="680" y2="165"/>
+
+  <!-- R3: top x=540 -> bottom x=540 -->
+  <line class="arrow" x1="540" y1="60" x2="540" y2="165"/>
+
+  <!-- O0: top x=610 -> bottom x=120 -->
+  <line class="arrow" x1="610" y1="60" x2="120" y2="165"/>
+
+  <!-- O1: top x=680 -> bottom x=470 -->
+  <line class="arrow" x1="680" y1="60" x2="470" y2="165"/>
+
+  <!-- O2: top x=750 -> bottom x=260 -->
+  <line class="arrow" x1="750" y1="60" x2="260" y2="165"/>
+
+  <!-- O3: top x=820 -> bottom x=820 -->
+  <line class="arrow" x1="820" y1="60" x2="820" y2="165"/>
+
+</svg>
+
