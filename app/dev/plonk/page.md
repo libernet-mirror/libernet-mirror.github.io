@@ -23,7 +23,7 @@ The acronym "zkSNARK" stands for **Z**ero-**K**nowledge **S**uccinct **N**on-int
 - **succinct** means the size of the proof is sublinear in the size of the original computation (in
   fact, the zkSNARK scheme used in Libernet results in constant-size proofs of about 1 KiB each);
 - **non-interactive** means the verification protocol does not require a challenge-response
-  round-trip;
+  roundtrip;
 - **argument of knowledge** indicates that the prover really had the full trace of the computation,
   notwithstanding the above requirements.
 
@@ -176,7 +176,7 @@ Proving the correct execution of an arbitrary computation takes the following st
 3. the prover provides:
    - a proof of knowledge of the above values;
    - a proof that the above values satisfy certain constraints;
-4. the verifier verifies the above proofs without any challenge-response round-trip, just checking
+4. the verifier verifies the above proofs without any challenge-response roundtrip, just checking
    them against the original circuit.
 
 The set of values produced at step #2 is known as the **witness**. You can think of it as the
@@ -210,9 +210,9 @@ However, this doesn't prove that the witnessed values really did result from com
 circuit. To achieve that we need to enforce a set of polynomial equations that characterize the
 circuit. These equations are known as **constraints**. The initial definition of a circuit, which is
 performed only once and ahead of time, results in two types of constraints:
-[**gates constraints**](#gate-constraints) and [**wire constraints**](#wire-constraints), discussed
-below. This initial definition process can be performed independently by the prover and the
-verifier, but it must results in exactly the same constraints for the proofs to be valid.
+[**gate constraints**](#gate-constraints) and [**wire constraints**](#wire-constraints), discussed
+below. The prover and the verifier can perform this initial definition process independently, but it
+must results in exactly the same constraints for the proofs to be valid.
 
 ## Gate Constraints
 
@@ -238,8 +238,10 @@ $$
 effectively yielding the constraint:
 
 $$
-l + r - o = 0 \\
-l + r = o
+\begin{aligned}
+  l + r - o = 0 \\
+  l + r = o
+\end{aligned}
 $$
 
 A multiplication gate would instead have:
@@ -251,8 +253,10 @@ $$
 resulting in:
 
 $$
--o + l \cdot r = 0 \\
-l \cdot r = o
+\begin{aligned}
+  -o + l \cdot r = 0 \\
+  l \cdot r = o
+\end{aligned}
 $$
 
 > [!NOTE]
@@ -307,8 +311,10 @@ Determining the coefficients of $H$ is very straightforward because the conditio
 all $k$-th roots of unity is simply defined by the equation:
 
 $$
-x^k = 1 \\
-x^k - 1 = 0
+\begin{aligned}
+  x^k = 1 \\
+  x^k - 1 = 0
+\end{aligned}
 $$
 
 so we have:
@@ -320,19 +326,19 @@ $$
 Circling back to the problem of proving that $T(x)$ is satisfied, i.e. zero on all powers of
 $\omega$, we can adopt the following protocol:
 
-- the prover determines a challenge value $\beta$ using the Fiat-Shamir heuristic;
+- the prover determines a challenge value $\xi$ using the Fiat-Shamir heuristic;
 - the prover generates the coefficients of $T$ by multiplying the $Q_*$ polynomials by the witness
   polynomials as per the definition of $T$;
 - the prover divides $T$ by $H$ using [polynomial long division][long-division] and obtains $P$ (if
   $T$ really is satisfied there must be no remainder);
-- the prover commits to $P$ and opens it at $\beta$.
+- the prover commits to $P$ and opens it at $\xi$.
 
 Note that **the existence of $P$ without any remainder implies that $T$ is divisible by $H$ and is
 therefore zero on all the domain and fully satisfied**. Thanks to that, on the verifier side we just
-need to verify the KZG openings for $L(\beta)$, $R(\beta)$, $O(\beta)$, and $P(\beta)$ and check:
+need to verify the KZG openings for $L(\xi)$, $R(\xi)$, $O(\xi)$, and $P(\xi)$ and check:
 
 $$
-Q_L(\beta) \cdot L(\beta) + Q_R(\beta) \cdot R(\beta) + Q_O(\beta) \cdot O(\beta) + Q_M(\beta) \cdot L(\beta) \cdot R(\beta) + Q_C(\beta) = P(\beta) \cdot H(\beta)
+Q_L(\xi) \cdot L(\xi) + Q_R(\xi) \cdot R(\xi) + Q_O(\xi) \cdot O(\xi) + Q_M(\xi) \cdot L(\xi) \cdot R(\xi) + Q_C(\xi) = P(\xi) \cdot H(\xi)
 $$
 
 This is however not yet enough to prove that the witness really fits the circuit: our protocol so
@@ -372,8 +378,8 @@ of our domain, $\omega^0, \omega^1, ..., \omega^{k - 1}$.
 Let's first analyze a simplified case that works on a single witness column polynomial $W$. Let
 $\sigma$ be a permutation of the evaluation domain that rotates or otherwise rearranges the
 coordinates of each wire partition, and let $\sigma_i$ be the $i$-th element of the permutation. Let
-$\beta$ and $\gamma$ be two challenge values computed with Fiat-Shamir (one of the two can be the
-same used to prove the [gate constraints](#gate-constraints)). We define the **coordinate pair
+$\beta$ and $\gamma$ be two challenge values computed with Fiat-Shamir (not the same as the $\xi$
+challenge used for [gate constraints](#gate-constraints)). We define the **coordinate pair
 accumulator** of $W$ as follows:
 
 $$
@@ -461,7 +467,7 @@ And for $\sigma_O$:
 
 Much like the $Q_*$ polynomials from the [gate constraints](#gate-constraints), the $\sigma_*$
 polynomials of the wire constraints are also interpolated only once ahead of time, and do not
-contribute to the prover or verifier cost.
+contribute to the proving or verification cost.
 
 The final coordinate pair accumulator expression for three witness columns is:
 
@@ -526,8 +532,8 @@ Z(\omega^k) = \frac{N(\omega^{k - 1})}{D(\omega^{k - 1})} \cdot \frac{N(\omega^{
 $$
 
 but $\omega$ is a $k$-th root of unity, so $Z(\omega^k) = Z(1) = 1$. So the base and inductive cases
-together ultimately **prove that the grand product of the recursive expression equals 1, meaning the
-wire constraints are fully satisfied**.
+together ultimately **prove that the coordinate pair accumulator product equals 1, meaning the wire
+constraints are fully satisfied**.
 
 ## Putting It All Together
 
