@@ -450,7 +450,14 @@ For $\sigma_R$ we have:
 (w^3, k1 * w^3)
 ```
 
-and so on.
+And for $sigma_O$:
+
+```
+(w^0, w^1)
+(w^1, k1 * w^2)
+(w^2, w^3)
+(w^3, k2 * w^3)
+```
 
 Much like the $Q_*$ polynomials from the [gate constraints](#gate-constraints), the $\sigma_*$
 polynomials of the wire constraints are also interpolated only once ahead of time, and do not
