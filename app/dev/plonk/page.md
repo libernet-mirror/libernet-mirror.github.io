@@ -395,7 +395,7 @@ $k_1 = 71$ and $k_2 = 104$.
 Specifically, we will now construct three separate permutations $\sigma_L$, $\sigma_R$, and
 $\sigma_O$. To do that, we first lay out the X coordinates of $L$, $R$, and $O$ in a single array
 with length $3k$ (note that the coordinates of $R$ and $O$ are multiplied by $k_1$ and $k_2$
-respectively, so all values are different):
+respectively, so **all values are different**):
 
 $$
 \omega^0, \omega^1, ..., \omega^{k - 1}, k_1 \omega^0, k_1 \omega^1, ..., k_1 \omega^{k - 1}, k_2 \omega^0, k_2 \omega^1, ..., k_2 \omega^{k - 1}
@@ -469,8 +469,8 @@ $$
 \prod_{i = 0}^{k - 1} \frac{L(\omega^i) + \beta \cdot \omega^i + \gamma}{L(\omega^i) + \beta \cdot \sigma_L(\omega^i) + \gamma} \cdot \frac{R(\omega^i) + \beta \cdot k_1 \cdot \omega^i + \gamma}{R(\omega^i) + \beta \cdot \sigma_R(\omega^i) + \gamma} \cdot \frac{O(\omega^i) + \beta \cdot k_2 \cdot \omega^i + \gamma}{O(\omega^i) + \beta \cdot \sigma_O(\omega^i) + \gamma}
 $$
 
-As mentioned above, **we need to prove that this expression equals 1 when plugging the polynomial of
-the proven witness, $L$, $R$, and $O$**. The KZG commitment scheme doesn't provide any means to
+As mentioned above, **we need to prove that this expression equals 1 when plugging the polynomials
+of the proven witness, $L$, $R$, and $O$**. The KZG commitment scheme doesn't provide any means to
 prove this value directly, so we'll use a technique based on the following **recursive definition of
 the coordinate pair accumulator**:
 
@@ -490,7 +490,7 @@ $$
 \end{aligned}
 $$
 
-so that the inductive case becomes:
+The inductive case becomes:
 
 $$
 Z(\omega^{i + 1}) = Z(\omega^i) \cdot \frac{N(\omega^i)}{D(\omega^i)}
