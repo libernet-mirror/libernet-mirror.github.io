@@ -301,9 +301,9 @@ $\prod_{i = 0}^{k - 1} (x - \omega^i)$.
 
 The divisor $\prod_{i = 0}^{k - 1} (x - \omega^i)$ is a polynomial that vanishes on all the
 evaluation domain and doesn't have any other roots. It's sometimes known as the **zero polynomial**,
-and we'll indicate it with $Z(x)$.
+and we'll indicate it with $H(x)$.
 
-Determining the coefficients of $Z$ is very straightforward because the condition of vanishing on
+Determining the coefficients of $H$ is very straightforward because the condition of vanishing on
 all $k$-th roots of unity is simply defined by the equation:
 
 $$
@@ -314,7 +314,7 @@ $$
 so we have:
 
 $$
-Z(x) = x^k - 1
+H(x) = x^k - 1
 $$
 
 Circling back to the problem of proving that $T(x)$ is satisfied, i.e. zero on all powers of
@@ -323,16 +323,16 @@ $\omega$, we can adopt the following protocol:
 - the prover determines a challenge value $\beta$ using the Fiat-Shamir heuristic;
 - the prover generates the coefficients of $T$ by multiplying the $Q_*$ polynomials by the witness
   polynomials as per the definition of $T$;
-- the prover divides $T$ by $Z$ using [polynomial long division][long-division] and obtains $P$ (if
+- the prover divides $T$ by $H$ using [polynomial long division][long-division] and obtains $P$ (if
   $T$ really is satisfied there must be no remainder);
 - the prover commits to $P$ and opens it at $\beta$.
 
-Note that **the existence of $P$ without any remainder implies that $T$ is divisible by $Z$ and is
+Note that **the existence of $P$ without any remainder implies that $T$ is divisible by $H$ and is
 therefore zero on all the domain and fully satisfied**. Thanks to that, on the verifier side we just
-need to verify the KZG opening for $L(\beta)$, $R(\beta)$, $O(\beta)$, and $P(\beta)$ and check:
+need to verify the KZG openings for $L(\beta)$, $R(\beta)$, $O(\beta)$, and $P(\beta)$ and check:
 
 $$
-Q_L(\beta) \cdot L(\beta) + Q_R(\beta) \cdot R(\beta) + Q_O(\beta) \cdot O(\beta) + Q_M(\beta) \cdot L(\beta) \cdot R(\beta) + Q_C(\beta) = P(\beta) \cdot Z(\beta)
+Q_L(\beta) \cdot L(\beta) + Q_R(\beta) \cdot R(\beta) + Q_O(\beta) \cdot O(\beta) + Q_M(\beta) \cdot L(\beta) \cdot R(\beta) + Q_C(\beta) = P(\beta) \cdot H(\beta)
 $$
 
 This is however not yet enough to prove that the witness really fits the circuit: our protocol so
@@ -466,13 +466,60 @@ contribute to the prover or verifier cost.
 The final coordinate pair accumulator expression for three witness columns is:
 
 $$
-\prod_{i = 0}^{k - 1} \frac{L(\omega^i) + \beta \cdot \omega^i + \gamma}{L(\omega^i) + \beta \cdot \sigma_L(\omega^i) + \gamma} \cdot \frac{R(\omega^i) + \beta \cdot k_1 \cdot \omega^i + \gamma}{R(\omega^i) + \beta \cdot k_1 \cdot \sigma_R(\omega^i) + \gamma} \cdot \frac{O(\omega^i) + \beta \cdot k_2 \cdot \omega^i + \gamma}{O(\omega^i) + \beta \cdot k_2 \cdot \sigma_O(\omega^i) + \gamma}
+\prod_{i = 0}^{k - 1} \frac{L(\omega^i) + \beta \cdot \omega^i + \gamma}{L(\omega^i) + \beta \cdot \sigma_L(\omega^i) + \gamma} \cdot \frac{R(\omega^i) + \beta \cdot k_1 \cdot \omega^i + \gamma}{R(\omega^i) + \beta \cdot \sigma_R(\omega^i) + \gamma} \cdot \frac{O(\omega^i) + \beta \cdot k_2 \cdot \omega^i + \gamma}{O(\omega^i) + \beta \cdot \sigma_O(\omega^i) + \gamma}
 $$
 
 As mentioned above, **we need to prove that this expression equals 1 when plugging the polynomial of
-the proven witness, $L$, $R$, and $O$**.
+the proven witness, $L$, $R$, and $O$**. The KZG commitment scheme doesn't provide any means to
+prove this value directly, so we'll use a technique based on the following **recursive definition of
+the coordinate pair accumulator**:
 
-TODO
+$$
+\begin{aligned}
+  Z(\omega^0) &= 1 \\
+  Z(\omega^{i + 1}) &= Z(\omega^i) \cdot \frac{L(\omega^i) + \beta \cdot \omega^i + \gamma}{L(\omega^i) + \beta \cdot \sigma_L(\omega^i) + \gamma} \cdot \frac{R(\omega^i) + \beta \cdot k_1 \cdot \omega^i + \gamma}{R(\omega^i) + \beta \cdot \sigma_R(\omega^i) + \gamma} \cdot \frac{O(\omega^i) + \beta \cdot k_2 \cdot \omega^i + \gamma}{O(\omega^i) + \beta \cdot \sigma_O(\omega^i) + \gamma}
+\end{aligned}
+$$
+
+Let $N$ be the polynomial of the numerator and $D$ the polynomial of the denominator:
+
+$$
+\begin{aligned}
+  N(x) &= (L(x) + \beta \cdot x + \gamma) \cdot (R(x) + \beta \cdot k_1 \cdot x + \gamma) \cdot (O(x) + \beta \cdot k_2 \cdot x + \gamma) \\
+  D(x) &= (L(x) + \beta \cdot \sigma_L(x) + \gamma) \cdot (R(x) + \beta \cdot \sigma_R(x) + \gamma) \cdot (O(x) + \beta \cdot \sigma_O(x) + \gamma)
+\end{aligned}
+$$
+
+so that the inductive case becomes:
+
+$$
+Z(\omega^{i + 1}) = Z(\omega^i) \cdot \frac{N(\omega^i)}{D(\omega^i)}
+$$
+
+The last formula is equivalent to saying:
+
+$$
+Z(\omega x) \equiv Z(x) \cdot \frac{N(x)}{D(x)} \mod{H}
+$$
+
+The $\mod{H}$ notation means _"for every $x$ in the evaluation domain"_, i.e. for every power of
+$\omega$.
+
+The problem of proving the wire constraints has now been turned into proving the two following
+claims:
+
+- **base case**: $Z(1) = 1$
+- **inductive case**: $Z(\omega x) \cdot D(x) - Z(x) \cdot N(x) \equiv 0 \mod{H}$
+
+Note what happens after the last element of the domain, $\omega^{k - 1}$:
+
+$$
+Z(\omega^k) = \frac{N(\omega^{k - 1})}{D(\omega^{k - 1})} \cdot \frac{N(\omega^{k - 2})}{D(\omega^{k - 2})} ...
+$$
+
+but $\omega$ is a $k$-th root of unity, so $Z(\omega^k) = Z(1) = 1$. So the base and inductive cases
+together ultimately **prove that the grand product of the recursive expression equals 1, meaning the
+wire constraints are fully satisfied**.
 
 ## Putting It All Together
 
