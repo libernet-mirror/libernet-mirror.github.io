@@ -450,7 +450,7 @@ For $\sigma_R$ we have:
 (w^3, k1 * w^3)
 ```
 
-And for $sigma_O$:
+And for $\sigma_O$:
 
 ```
 (w^0, w^1)
