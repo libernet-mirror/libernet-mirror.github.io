@@ -46,10 +46,10 @@ As an example, consider the following circuit:
 ![A sample zkSNARK circuit.](/circuit.png)
 
 It's easy to see how this encodes the computation of $x^3 + x + 5$. A prover with this circuit can
-produce a zkSNARK cryptographic proof that convinces a verifier of a statement like _"I have a
-secret number $x$ such that $x^3 + x + 5 = 35$"_, wihtout revealing $x$. This is a simple example so
-it's easy to find out that this number would be $x = 3$, but zkSNARKs enable complex protocols such
-as anonymous voting and payments where some elements of the computation remain secret.
+produce a zkSNARK proof that convinces a verifier of a statement like _"I have a secret number $x$
+such that $x^3 + x + 5 = 35$"_, wihtout revealing $x$. This is a simple example so it's easy to find
+out that the number would be $x = 3$, but zkSNARKs enable complex protocols such as anonymous voting
+and payments where some elements of the computation remain secret.
 
 ## Evaluation Domain and Polynomial Interpolation
 
