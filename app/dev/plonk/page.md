@@ -37,7 +37,7 @@ on.
 
 ## Circuits
 
-In the zkSNARK world a computation is encoded as a conceptual circuit with gates and wires. The
+In the zkSNARK world a computation is conceptually rendered as a circuit with gates and wires. The
 gates represent basic arithmetic operations such as addition and multiplication, and the wires
 connect the inputs and outputs of the gates.
 
@@ -47,7 +47,7 @@ As an example, consider the following circuit:
 
 It's easy to see how this encodes the computation of $x^3 + x + 5$. A prover with this circuit can
 produce a zkSNARK proof that convinces a verifier of a statement like _"I have a secret number $x$
-such that $x^3 + x + 5 = 35$"_, wihtout revealing $x$. This is a simple example so it's easy to find
+such that $x^3 + x + 5 = 35$"_, without revealing $x$. This is a simple example so it's easy to find
 out that the number would be $x = 3$, but zkSNARKs enable complex protocols such as anonymous voting
 and payments where some elements of the computation remain secret.
 
@@ -307,6 +307,14 @@ The divisor $\prod_{i = 0}^{k - 1} (x - \omega^i)$ is a polynomial that vanishes
 evaluation domain and doesn't have any other roots. It's sometimes known as the **zero polynomial**,
 and we'll indicate it with $H(x)$.
 
+We also use the following notation:
+
+$$
+T(x) \equiv 0 \mod H
+$$
+
+meaning that the polynomial division of $T$ by $H$ yields a zero remainder.
+
 Determining the coefficients of $H$ is very straightforward because the condition of vanishing on
 all $k$-th roots of unity is simply defined by the equation:
 
@@ -372,8 +380,10 @@ the left input, right input, and output column, respectively.
 - $\{ R_3 \}$ (value 5)
 - $\{ O_3 \}$ (value 35)
 
-To achieve our goal we'll build a polynomial expression based on permutations of the X coordinates
-of our domain, $\omega^0, \omega^1, ..., \omega^{k - 1}$.
+The core insight is that the witness wouldn't change if we permuted the elements of each partition
+arbitrarily, because they have identical values. Therefore, to achieve our goal we'll build a
+polynomial expression based on permutations of the X coordinates of our domain,
+$\omega^0, \omega^1, ..., \omega^{k - 1}$.
 
 Let's first analyze a simplified case that works on a single witness column polynomial $W$. Let
 $\sigma$ be a permutation of the evaluation domain that rotates or otherwise rearranges the
@@ -389,7 +399,9 @@ $$
 This gives us an intuition of how partition-wise wire equality is proven: since the $\sigma_i$
 coordinates in the denominator are permuted, the value of the coordinate pair accumulator is 1 iff
 the factors in the denominator remain equal to those in the numerator except for their order -- in
-other words, iff the permutation didn't change anything in the overall expression.
+other words, iff the permutation didn't change anything in the overall expression. So proving that
+all wire constraints are satisfied reduces to proving that the coordinate pair accumulator product
+equals 1 for that witness.
 
 Let's now extend this technique to work with three different witness columns $L$, $R$, and $O$. We
 will build a "unified" coordinate pair accumulator multiplying the individual accumulators of the
@@ -510,14 +522,11 @@ $$
 Z(\omega^{i + 1}) \cdot D(\omega^i) - Z(\omega^i) \cdot N(\omega^i) = 0
 $$
 
-The last formula is equivalent to saying:
+The last formula is equivalent to:
 
 $$
 Z(\omega x) D(x) - Z(x) N(x) \equiv 0 \mod{H}
 $$
-
-The $\mod{H}$ notation means _"for every $x$ in the evaluation domain"_, i.e. for every power of
-$\omega$.
 
 The problem of proving the wire constraints has now been turned into proving the two following
 claims:
@@ -536,6 +545,30 @@ together ultimately **prove that the coordinate pair accumulator product equals 
 constraints are fully satisfied**.
 
 ## Putting It All Together
+
+Throughout the previous sections the problem of proving the correct execution of an arbitrary
+computation represented as a PLONK circuit has been reduced to proving these four pieces:
+
+1. committing to the witness polynomials $L$, $R$, and $O$ and providing KZG openings for the public
+   parts;
+
+2. proving the gate constraint:
+
+$$
+Q_L(x)L(x) + Q_R(x)R(x) + Q_O(x)O(x) + Q_M(x)L(x)R(x) + Q_C(x) \equiv 0 \mod H
+$$
+
+3. proving the base case of the wire constraint:
+
+$$
+Z(1) = 1
+$$
+
+4. proving the inductive case of the wire constraint:
+
+$$
+Z(\omega x)D(x) - Z(x)N(x) \equiv 0 \mod H
+$$
 
 TODO
 
