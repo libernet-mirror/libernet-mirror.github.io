@@ -557,13 +557,13 @@ $$
 \end{aligned}
 $$
 
-The barycentric form of $L_0$ is:
+The definition of $L_0$ is:
 
 $$
 L_0(x) = \prod_{i = 1}^{k - 1} \frac{x - \omega^i}{\omega^0 - \omega^i} = \prod_{i = 1}^{k - 1} \frac{x - \omega^i}{1 - \omega^i}
 $$
 
-The numerator is equivalent to all factors of $H$ except $(x - \omega^0)$:
+The numerator is equivalent to all linear factors of $H$ except $(x - \omega^0)$:
 
 $$
 \prod_{i = 1}^{k - 1} (x - \omega^i) = \frac{H(x)}{x - \omega^0} = \frac{x^k - 1}{x - 1}
@@ -629,6 +629,60 @@ $$
 $$
 Z(\omega x)D(x) - Z(x)N(x) \equiv 0 \mod H
 $$
+
+The equations at #2, #3, and #4 represent polynomial expressions that must vanish on all powers of
+$\omega$. Let $T_G$, $T_{W_0}$, and $T_W$ be those expressions:
+
+- gate constraint:
+
+$$
+T_G(x) = Q_L(x)L(x) + Q_R(x)R(x) + Q_O(x)O(x) + Q_M(x)L(x)R(x) + Q_C(x)
+$$
+
+- wire constraint base case:
+
+$$
+T_{W_0}(x) = (Z(x) - 1) \cdot L_0(x)
+$$
+
+- wire constraint inductive case:
+
+$$
+T_W(x) = Z(\omega x)D(x) - Z(x)N(x)
+$$
+
+We have already mentioned a technique to prove our $T_*(x) \equiv 0 \mod H$ equations using KZG:
+
+- use [polynomial long division][long-division] to find the corresponding quotient $P_*$ such that
+  $T_*(x) = H(x) \cdot P_*(x)$ (i.e. no remainder),
+- send the KZG commitments to $T_*$ and $P_*$,
+- open the commitment in a Fiat-Shamir challenge $\xi$,
+- check that $T_*(\xi) = H(\xi) \cdot P_*(\xi)$.
+
+While proving $T_G$, $T_{W_0}$, and $T_W$ separately with this technique would work correctly, we
+can achieve higher efficiency by proving them together in a single equation. A naive approach would
+consist of adding the three constraints up:
+
+$$
+T_G(x) + T_{W_0}(x) + T_W(x) \equiv 0 \mod H
+$$
+
+However that doesn't prove each expression vanishes, it only proves _their sum_ vanishes, exposing
+us to cancellation attacks -- e.g. a malicious prover can satisfy the constraint by proving
+$T_G(x) = 42$ and $T_{W_0}(x) + T_W(x) = -42$. To counter that we need to use a new Fiat-Shamir
+challenge $\alpha$ and combine our $T_*$ with powers of $\alpha$:
+
+$$
+T_G(x) + \alpha T_{W_0}(x) + \alpha^2 T_W(x) \equiv 0 \mod H
+$$
+
+So our proving protocol has now been simplified to:
+
+1. committing to the witness polynomials $L$, $R$, and $O$ and providing KZG openings for the public
+   parts,
+2. proving a single constraint $T(x) \equiv 0 \mod H$,
+
+where $T(x) = T_G(x) + \alpha T_{W_0}(x) + \alpha^2 T_W(x)$.
 
 TODO
 
