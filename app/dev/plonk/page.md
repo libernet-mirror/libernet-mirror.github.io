@@ -656,7 +656,7 @@ We have already mentioned a technique to prove our $T_*(x) \equiv 0 \mod H$ equa
 - use [polynomial long division][long-division] to find the corresponding quotient $P_*$ such that
   $T_*(x) = H(x) \cdot P_*(x)$ (i.e. no remainder),
 - send the KZG commitments to $T_*$ and $P_*$,
-- open the commitment in a Fiat-Shamir challenge $\xi$,
+- open the commitments in a Fiat-Shamir challenge $\xi$,
 - check that $T_*(\xi) = H(\xi) \cdot P_*(\xi)$.
 
 While proving $T_G$, $T_{W_0}$, and $T_W$ separately with this technique would work correctly, we
@@ -668,9 +668,9 @@ T_G(x) + T_{W_0}(x) + T_W(x) \equiv 0 \mod H
 $$
 
 However that doesn't prove each expression vanishes, it only proves _their sum_ vanishes, exposing
-us to cancellation attacks -- e.g. a malicious prover can satisfy the constraint by proving
-$T_G(x) = 42$ and $T_{W_0}(x) + T_W(x) = -42$. To counter that we need to use a new Fiat-Shamir
-challenge $\alpha$ and combine our $T_*$ with powers of $\alpha$:
+us to cancellation attacks. A malicious prover can satisfy the constraint by proving $T_G(x) = 42$
+and $T_{W_0}(x) + T_W(x) = -42$. To counter that we need to use a new Fiat-Shamir challenge $\alpha$
+and combine our $T_*$ with powers of $\alpha$:
 
 $$
 T_G(x) + \alpha T_{W_0}(x) + \alpha^2 T_W(x) \equiv 0 \mod H
