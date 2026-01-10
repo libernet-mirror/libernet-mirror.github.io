@@ -540,9 +540,69 @@ $$
 Z(\omega^k) = \frac{N(\omega^{k - 1})}{D(\omega^{k - 1})} \cdot \frac{N(\omega^{k - 2})}{D(\omega^{k - 2})} ...
 $$
 
-but $\omega$ is a $k$-th root of unity, so $Z(\omega^k) = Z(1) = 1$. So the base and inductive cases
-together ultimately **prove that the coordinate pair accumulator product equals 1, meaning the wire
-constraints are fully satisfied**.
+but $\omega$ is a $k$-th root of unity, so $Z(\omega^k) = Z(1) = 1$. So together, the base case and
+the inductive cases ultimately **prove that the coordinate pair accumulator product equals 1,
+meaning the wire constraints are fully satisfied**.
+
+In principle, proving the base case is very straightforward as we simply need to commit to $Z$ and
+open it at $1$. However, for reasons that are explained in the [next
+section](#putting-it-all-together), it's best to convert this part of the proof to another equation
+in the form $P(x) \equiv 0 \mod H$. We achieve that using the **Lagrange basis polynomial $L_0$**
+that activates on the first element of the evaluation domain $\omega^0$ and vanishes on all others:
+
+$$
+\begin{aligned}
+  L_0(\omega^0) &= 1 \\
+  L_0(\omega^i) &= 0, \forall i > 0
+\end{aligned}
+$$
+
+The barycentric form of $L_0$ is:
+
+$$
+L_0(x) = \prod_{i = 1}^{k - 1} \frac{x - \omega^i}{\omega^0 - \omega^i} = \prod_{i = 1}^{k - 1} \frac{x - \omega^i}{1 - \omega^i}
+$$
+
+The numerator is equivalent to all factors of $H$ except $(x - \omega^0)$:
+
+$$
+\prod_{i = 1}^{k - 1} (x - \omega^i) = \frac{H(x)}{x - \omega^0} = \frac{x^k - 1}{x - 1}
+$$
+
+Let's call that $H_0$. The denominator is equivalent to evaluating $H_0$ in $1$, which unfortunately
+yields an indeterminate form if we do it with the above closed form:
+
+$$
+H_0(x) = \frac{x^k - 1}{x - 1}
+$$
+
+$$
+H_0(1) = \frac{1^k - 1}{1 - 1} = \frac00
+$$
+
+But we can still find where it converges to using [L'Hopital's rule][lhopital]:
+
+$$
+\lim_{x \to 1} \frac{x^k - 1}{x - 1} = \lim_{x \to 1} \frac{kx^{k - 1}}{1} = k
+$$
+
+Since $H_0$ is a polynomial it's continuous across the whole domain, so the limit we found is the
+actual value of the polynomial in $1$ and the indeterminate form was just an artifact of the closed
+form.
+
+Knowing the numerator and the denominator, the ratio between the two becomes:
+
+$$
+L_0(x) = \frac{x^k - 1}{k \cdot (x - 1)}
+$$
+
+Once we have $L_0$, proving $Z(1) = 1$ is also straightforward. The constraint becomes:
+
+$$
+(Z(x) - 1) \cdot L_0(x) \equiv 0 \mod H
+$$
+
+The left-hand side vanishes everywhere because either $L_0$ is 0 or $Z(x)$ is 1.
 
 ## Putting It All Together
 
@@ -561,7 +621,7 @@ $$
 3. proving the base case of the wire constraint:
 
 $$
-Z(1) = 1
+(Z(x) - 1) \cdot L_0(x) \equiv 0 \mod H
 $$
 
 4. proving the inductive case of the wire constraint:
@@ -579,6 +639,7 @@ TODO
 [imaginary-unit]: https://en.wikipedia.org/wiki/Imaginary_unit
 [kzg]: https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html
 [lagrange]: https://en.wikipedia.org/wiki/Lagrange_polynomial
+[lhopital]: https://en.wikipedia.org/wiki/L%27H%C3%B4pital%27s_rule
 [long-division]: https://en.wikipedia.org/wiki/Polynomial_long_division
 [plonk]: https://eprint.iacr.org/2019/953.pdf
 [zksnarks]: https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof
