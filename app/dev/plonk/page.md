@@ -29,7 +29,8 @@ The acronym "zkSNARK" stands for **Z**ero-**K**nowledge **S**uccinct **N**on-int
 
 Libernet uses zkSNARKs in a few different contexts, for example anonymous payments towards incognito
 accounts. Our zkSNARK protocol is based on [KZG polynomial commitments][kzg] over the BLS12-381
-elliptic curve and [PLONK arithmetization][plonk].
+elliptic curve, and [PLONK arithmetization][plonk]. It uses the [Poseidon algebraic hash][poseidon]
+for hashing.
 
 This page describes the full PLONK protocol that we use in Libernet in detail, but it assumes
 knowledge of KZG. Be sure to understand everything in [Dankrad Feist's article][kzg] before moving
@@ -537,7 +538,7 @@ claims:
 Note what happens after the last element of the domain, $\omega^{k - 1}$:
 
 $$
-Z(\omega^k) = \frac{N(\omega^{k - 1})}{D(\omega^{k - 1})} \cdot \frac{N(\omega^{k - 2})}{D(\omega^{k - 2})} ...
+Z(\omega^k) = \frac{N(\omega^{k - 1})}{D(\omega^{k - 1})} \cdot \frac{N(\omega^{k - 2})}{D(\omega^{k - 2})} \cdot ...
 $$
 
 but $\omega$ is a $k$-th root of unity, so $Z(\omega^k) = Z(1) = 1$. So together, the base case and
@@ -570,7 +571,7 @@ $$
 $$
 
 Let's call that $H_0$. The denominator is equivalent to evaluating $H_0$ in $1$, which unfortunately
-yields an indeterminate form if we do it with the above closed form:
+yields an indeterminate form if we do it using the above closed form:
 
 $$
 H_0(x) = \frac{x^k - 1}{x - 1}
@@ -580,7 +581,7 @@ $$
 H_0(1) = \frac{1^k - 1}{1 - 1} = \frac00
 $$
 
-But we can still find where it converges to using [L'Hopital's rule][lhopital]:
+But we can still find what it converges to using [L'Hopital's rule][lhopital]:
 
 $$
 \lim_{x \to 1} \frac{x^k - 1}{x - 1} = \lim_{x \to 1} \frac{kx^{k - 1}}{1} = k
@@ -668,13 +669,16 @@ T_G(x) + T_{W_0}(x) + T_W(x) \equiv 0 \mod H
 $$
 
 However that doesn't prove each expression vanishes, it only proves _their sum_ vanishes, exposing
-us to cancellation attacks. A malicious prover can satisfy the constraint by proving $T_G(x) = 42$
-and $T_{W_0}(x) + T_W(x) = -42$. To counter that we need to use a new Fiat-Shamir challenge $\alpha$
-and combine our $T_*$ with powers of $\alpha$:
+us to cancellation attacks. A malicious prover might be able to satisfy the constraint by building a
+bad witness such that $T_G(x) = 42$ and $T_{W_0}(x) + T_W(x) = -42$. To counter that we need to use
+a new Fiat-Shamir challenge $\alpha$ and combine our $T_*$ with powers of $\alpha$:
 
 $$
 T_G(x) + \alpha T_{W_0}(x) + \alpha^2 T_W(x) \equiv 0 \mod H
 $$
+
+The Fiat-Shamir heuristic here prevents the malicious prover of the above example from crafting a
+bad witness because they'd have to know $\alpha$, which is a hash of the witness itself.
 
 So our proving protocol has now been simplified to:
 
@@ -683,6 +687,31 @@ So our proving protocol has now been simplified to:
 2. proving a single constraint $T(x) \equiv 0 \mod H$,
 
 where $T(x) = T_G(x) + \alpha T_{W_0}(x) + \alpha^2 T_W(x)$.
+
+## The Full Protocol
+
+This section specifies the details of the PLONK protocol used in Libernet. It's organized in three
+phases:
+
+- a [setup phase](#setup-phase) that runs ahead of time and prepares the circuit describing the
+  computation to prove;
+- a [proving phase](#proving-phase) where a prover runs the computations, produces the corresponding
+  witness, and provides a zkSNARK proof of correctness;
+- and a [verification phase](#verification-phase) where a verifier validates the above zkSNARK
+  proof.
+
+For hashing we use the [Poseidon algebraic hash function][poseidon] over the scalar field of
+BLS12-381 with $x^5$ S-box and T=3 (rate=2, capacity=1).
+
+### Setup Phase
+
+TODO
+
+### Proving Phase
+
+TODO
+
+### Verification Phase
 
 TODO
 
@@ -696,4 +725,5 @@ TODO
 [lhopital]: https://en.wikipedia.org/wiki/L%27H%C3%B4pital%27s_rule
 [long-division]: https://en.wikipedia.org/wiki/Polynomial_long_division
 [plonk]: https://eprint.iacr.org/2019/953.pdf
+[poseidon]: https://www.poseidon-hash.info/
 [zksnarks]: https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof
