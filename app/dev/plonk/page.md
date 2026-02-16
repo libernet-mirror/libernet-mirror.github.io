@@ -564,14 +564,16 @@ $$
 L_0(x) = \prod_{i = 1}^{k - 1} \frac{x - \omega^i}{\omega^0 - \omega^i} = \prod_{i = 1}^{k - 1} \frac{x - \omega^i}{1 - \omega^i}
 $$
 
-The numerator is equivalent to all linear factors of $H$ except $(x - \omega^0)$:
+The numerator of $L_0$ is equivalent to all linear factors of $H$ except $(x - \omega^0)$:
 
 $$
 \prod_{i = 1}^{k - 1} (x - \omega^i) = \frac{H(x)}{x - \omega^0} = \frac{x^k - 1}{x - 1}
 $$
 
-Let's call that $H_0$. The denominator is equivalent to evaluating $H_0$ in $1$, which unfortunately
-yields an indeterminate form if we do it using the above closed form:
+Let's call that $H_0$.
+
+The denominator of $L_0$ is equivalent to evaluating $H_0$ in $1$, which unfortunately yields an
+indeterminate form if we do it using the above closed form:
 
 $$
 H_0(x) = \frac{x^k - 1}{x - 1}
@@ -670,8 +672,8 @@ $$
 
 However that doesn't prove each expression vanishes, it only proves _their sum_ vanishes, exposing
 us to cancellation attacks. A malicious prover might be able to satisfy the constraint by building a
-bad witness such that $T_G(x) = 42$ and $T_{W_0}(x) + T_W(x) = -42$. To counter that we need to use
-a new Fiat-Shamir challenge $\alpha$ and combine our $T_*$ with powers of $\alpha$:
+bad witness such that $T_G(x) = 42$ and $T_{W_0}(x) + T_W(x) = -42$, for example. To counter that,
+we can use a new Fiat-Shamir challenge $\alpha$ and combine our $T_*$ with powers of $\alpha$:
 
 $$
 T_G(x) + \alpha T_{W_0}(x) + \alpha^2 T_W(x) \equiv 0 \mod H
@@ -700,8 +702,8 @@ phases:
 - and a [verification phase](#verification-phase) where a verifier validates the above zkSNARK
   proof.
 
-For hashing we use the [Poseidon algebraic hash function][poseidon] over the scalar field of
-BLS12-381 with $x^5$ S-box and T=3 (rate=2, capacity=1).
+For hashing we use the [Poseidon2 algebraic hash function][poseidon2] over the scalar field of
+BLS12-381 with $x^5$ S-box and T=4 (rate=3, capacity=1).
 
 ### Setup Phase
 
@@ -726,4 +728,5 @@ TODO
 [long-division]: https://en.wikipedia.org/wiki/Polynomial_long_division
 [plonk]: https://eprint.iacr.org/2019/953.pdf
 [poseidon]: https://www.poseidon-hash.info/
+[poseidon2]: https://eprint.iacr.org/2023/323.pdf
 [zksnarks]: https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof
